@@ -3,13 +3,13 @@ import pytest
 from graphene.test import Client
 
 from schema import schema
-from .test_factories import PlantFactory, WaterPlanFactory
+from .test_factories import PlantFactory, WateringLogFactory
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_plants_to_care_query_with_empty_result():
+def test_plants_to_care_query_with_no_plants():
     client = Client(schema)
     executed = client.execute(
         '''
@@ -30,10 +30,30 @@ def test_plants_to_care_query_with_empty_result():
     }
 
 
+def test_plants_to_care_query_with_plants_and_no_logs():
+    PlantFactory()
+
+    client = Client(schema)
+    executed = client.execute(
+        '''
+        query {
+            plantsToCare {
+                id
+                name
+                imageUrl
+                description
+            }
+        }
+        '''
+    )
+    plants_to_care = executed['data']['plantsToCare']
+    assert len(plants_to_care) == 1
+
+
 def test_plants_to_care_query_with_results():
-    plan_a = WaterPlanFactory(next_suggested_date=date.today())
-    plan_b = WaterPlanFactory(next_suggested_date=date.today() - timedelta(days=3))
-    plan_c = WaterPlanFactory(next_suggested_date=date.today() + timedelta(days=3))
+    plan_a = WateringLogFactory(next_suggested_date=date.today())
+    plan_b = WateringLogFactory(next_suggested_date=date.today() - timedelta(days=3))
+    plan_c = WateringLogFactory(next_suggested_date=date.today() + timedelta(days=3))
 
     client = Client(schema)
     executed = client.execute(
@@ -56,24 +76,24 @@ def test_plants_to_care_query_with_results():
 
 
 def test_water_plant_mutation():
-    plant = PlantFactory(id=1)
+    PlantFactory(id=1)
 
     client = Client(schema)
     executed = client.execute(
         '''
         mutation {
             waterPlant(plantId: 1) {
-                waterPlan {
-                plant {
-                    id
-                }
-                nextSuggestedDate
-                waterDate
+                wateringLog {
+                    plant {
+                        id
+                    }
+                    nextSuggestedDate
+                    waterDate
                 }
             }
         }
         '''
     )
-    plan = executed['data']['waterPlant']['waterPlan']
-    assert plan['plant']['id'] == '1'
-    assert plan['waterDate'] == date.today().strftime('%Y-%m-%d')
+    log = executed['data']['waterPlant']['wateringLog']
+    assert log['plant']['id'] == '1'
+    assert log['waterDate'] == date.today().strftime('%Y-%m-%d')

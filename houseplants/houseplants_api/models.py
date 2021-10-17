@@ -11,9 +11,9 @@ class Plant(models.Model):
         return self.name
 
 
-class WaterPlan(models.Model):
+class WateringLog(models.Model):
     plant = models.ForeignKey(
-        Plant, related_name="water_plans", on_delete=models.CASCADE
+        Plant, on_delete=models.CASCADE
     )
     water_date = models.DateField(auto_now_add=True)
     next_suggested_date = models.DateField()

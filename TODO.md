@@ -1,2 +1,2 @@
-- Resolve mutation to add WaterPlan data
+- Resolve mutation to add WateringLog data
 - Tests!

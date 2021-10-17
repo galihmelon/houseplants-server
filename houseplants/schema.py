@@ -2,10 +2,11 @@ from datetime import date, timedelta
 import graphene
 from graphene_django import DjangoObjectType
 
-from houseplants_api.models import Plant, WaterPlan
+from houseplants_api.models import Plant, WateringLog
 from houseplants_api.resolvers import (
     resolve_all_plants,
     resolve_plants_to_care,
+    resolve_water_plant,
 )
 
 
@@ -15,9 +16,9 @@ class PlantType(DjangoObjectType):
         fields = ("id", "name", "image_url", "description")
 
 
-class WaterPlanType(DjangoObjectType):
+class WateringLogType(DjangoObjectType):
     class Meta:
-        model = WaterPlan
+        model = WateringLog
         fields = ("plant", "water_date", "next_suggested_date")
 
 
@@ -36,13 +37,12 @@ class WaterPlantMutation(graphene.Mutation):
     class Arguments:
         plant_id = graphene.ID()
 
-    water_plan = graphene.Field(WaterPlanType)
+    watering_log = graphene.Field(WateringLogType)
 
     @classmethod
     def mutate(cls, root, info, plant_id):
-        plant = Plant.objects.get(id=plant_id)
-        plan = WaterPlan.objects.create(plant=plant, next_suggested_date=date.today() + timedelta(days=7))
-        return WaterPlantMutation(water_plan=plan)
+        log = resolve_water_plant(plant_id)
+        return WaterPlantMutation(watering_log=log)
 
 
 class Mutation(graphene.ObjectType):
