@@ -3,7 +3,7 @@ import pytest
 from graphene.test import Client
 
 from schema import schema
-from .test_factories import WaterPlanFactory
+from .test_factories import PlantFactory, WaterPlanFactory
 
 
 pytestmark = pytest.mark.django_db
@@ -53,3 +53,27 @@ def test_plants_to_care_query_with_results():
 
     plant_ids = [int(plant['id']) for plant in plants_to_care]
     assert plant_ids == [plan_a.plant.id, plan_b.plant.id]
+
+
+def test_water_plant_mutation():
+    plant = PlantFactory(id=1)
+
+    client = Client(schema)
+    executed = client.execute(
+        '''
+        mutation {
+            waterPlant(plantId: 1) {
+                waterPlan {
+                plant {
+                    id
+                }
+                nextSuggestedDate
+                waterDate
+                }
+            }
+        }
+        '''
+    )
+    plan = executed['data']['waterPlant']['waterPlan']
+    assert plan['plant']['id'] == '1'
+    assert plan['waterDate'] == date.today().strftime('%Y-%m-%d')
