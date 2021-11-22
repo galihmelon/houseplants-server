@@ -75,6 +75,30 @@ def test_plants_to_care_query_with_results():
     assert plant_ids == [plan_a.plant.id, plan_b.plant.id]
 
 
+def test_clean_plant_mutation():
+    PlantFactory(id=123)
+
+    client = Client(schema)
+    executed = client.execute(
+        '''
+        mutation {
+            cleanPlant(plantId: 123) {
+                cleaningLog {
+                    plant {
+                        id
+                    }
+                    nextSuggestedDate
+                    cleanDate
+                }
+            }
+        }
+        '''
+    )
+    log = executed['data']['cleanPlant']['cleaningLog']
+    assert log['plant']['id'] == '123'
+    assert log['cleanDate'] == date.today().strftime('%Y-%m-%d')
+
+
 def test_water_plant_mutation():
     PlantFactory(id=1)
 
